@@ -94,6 +94,25 @@ descriptor 里可以登记多个服务，各自独立生命周期：
 - 断连时插件客户端会**直连 watchdog**（`127.0.0.1:<watchdogPort>`），所以“页面连不上后端”时依然能重启服务
 - 入口、状态、按钮全部走插件 API（`manifest.ui` + `host.route`），不改包内源码
 
+### 只想先看看界面（不动 pi-web-ui 包、不打补丁）
+
+插件目录与包目录本来就是分开的（`npm i -g pi-web-ui` 升级不会动它），所以可以只拷插件：
+
+```powershell
+$d="$env:USERPROFILE\.pi-web\plugins\reconnect"; New-Item -ItemType Directory -Force -Path "$d\client" | Out-Null
+$b="https://raw.githubusercontent.com/xieweimo/pi-web-ui-reconnect-watchdog/main/reconnect-plugin"
+irm "$b/manifest.json" -OutFile "$d\manifest.json"
+irm "$b/index.mjs" -OutFile "$d\index.mjs"
+irm "$b/client/entry.mjs" -OutFile "$d\client\entry.mjs"
+```
+
+刷新页面后顶栏会出现「重连」入口。没起 watchdog 时它会提示“重启守护未运行”，
+但状态显示与「刷新并重新连接」照常可用。
+
+卸载：删掉 `~\.pi-web\plugins\reconnect` 目录即可，零残留。
+
+（Linux / macOS 对应目录是 `~/.pi-web/plugins/reconnect/`，把三个文件放进去就行。）
+
 ## 实测记录（Windows）
 
 - `npm run dev`：整棵进程树（npm → concurrently → node --watch / vite）停止并重启，恢复后前后端都健康
