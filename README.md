@@ -94,6 +94,19 @@ descriptor 里可以登记多个服务，各自独立生命周期：
 - 断连时插件客户端会**直连 watchdog**（`127.0.0.1:<watchdogPort>`），所以“页面连不上后端”时依然能重启服务
 - 入口、状态、按钮全部走插件 API（`manifest.ui` + `host.route`），不改包内源码
 
+### 界面长什么样
+
+普通环境（只有一层服务）：
+
+![production panel](screenshots/panel-production.png)
+
+开发环境（前后端各自独立，可以只重启其中一层）：
+
+![development panel](screenshots/panel-development.png)
+
+面板文案会按运行环境切换：开发环境讲“哪一层、会不会影响 HMR”；普通环境只讲“什么时候点、会不会丢东西”，
+不出现 Vite / `node --watch` 这类开发术语。
+
 ### 只想先看看界面（不动 pi-web-ui 包、不打补丁）
 
 插件目录与包目录本来就是分开的（`npm i -g pi-web-ui` 升级不会动它），所以可以只拷插件：
@@ -131,6 +144,7 @@ irm "$b/client/entry.mjs" -OutFile "$d\client\entry.mjs"
 reconnect-plugin/                         界面插件（manifest + 服务端路由 + 客户端视图）
 pi-web-ui-recovery-watchdog.js            companion watchdog（单文件、零依赖，只用 Node 内置模块）
 examples/restart-descriptor.example.json  单服务 / 多服务 descriptor 示例
+screenshots/                              界面截图
 ```
 
 ## License
