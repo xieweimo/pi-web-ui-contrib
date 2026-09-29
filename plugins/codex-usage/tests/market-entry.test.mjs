@@ -4,7 +4,8 @@
  * 两个仓库布局都要能过：
  *   - 私有源码仓库：<root>/configs/codex-usage-plugin-market-entry.json
  *   - 对外贡献仓库：<root>/catalog.json（plugins/<id> 结构）
- * 运行：node plugins/codex-usage/tests/market-entry.test.mjs
+ * 运行：node <插件目录>/tests/market-entry.test.mjs
+ *       （私有源码仓库：projects/codex-usage-plugin；对外贡献仓库：plugins/codex-usage）
  */
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
