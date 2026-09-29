@@ -1,0 +1,20 @@
+[
+	{
+		"id": "codex-usage",
+		"name": "额度与成本",
+		"icon": "⚡",
+		"description": "会话级多模型账本：按 API 提供商和模型连续累计成本、显示 token 与有效单价；订阅调用明确不计费。",
+		"descriptionEn": "Conversation-level multi-model ledger: continuous cost totals by API provider and model, with token and effective-rate details; subscription calls are explicitly excluded.",
+		"source": "xieweimo/pi-web-ui-contrib/plugins/codex-usage",
+		"homepage": "https://github.com/xieweimo/pi-web-ui-contrib/tree/main/plugins/codex-usage"
+	},
+	{
+		"id": "reconnect",
+		"name": "重连",
+		"icon": "🔄",
+		"description": "断连恢复：查看网页服务与重启守护状态，一键重新连接或重启网页服务（配套可选独立守护进程，服务卡死也能救回来）。",
+		"descriptionEn": "Reconnection & service recovery: inspect web service and companion watchdog health, reconnect or restart services in one click (optional standalone watchdog survives a hung service).",
+		"source": "xieweimo/pi-web-ui-contrib/plugins/reconnect",
+		"homepage": "https://github.com/xieweimo/pi-web-ui-contrib/tree/main/plugins/reconnect"
+	}
+]

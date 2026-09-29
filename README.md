@@ -1,100 +1,63 @@
-# pi-web-ui：重连 / 重启服务（界面插件 + 可选 companion watchdog）
+# pi-web-ui-contrib
 
-给 pi-web-ui 加一个「重新连接 / 重启服务」入口；并且在服务卡死或崩溃时，还能把它救回来。
+对 [pi-web-ui](https://github.com/xing-shuyin/pi-web-ui) 的**对外贡献集合**：可直接安装的插件、版本绑定的补丁，以及提给上游的 issue / PR 草案。
 
-两部分可以分开用，也可以一起用：
+> 本仓库原名 `pi-web-ui-reconnect-watchdog`。改名后旧的 git / 网页链接会被 GitHub 自动重定向，但插件目录也从 `reconnect-plugin/` 移到了 `plugins/reconnect/` —— **旧路径不会重定向**，上游默认插件列表里的条目需要同步更新（见 [`upstream/README.md`](upstream/README.md)）。
 
-| 部分 | 是什么 |
+## 目录
+
+| 路径 | 内容 |
 | --- | --- |
-| `reconnect-plugin/` | 界面插件：状态显示 +「刷新并重新连接」+「重启服务」（按 descriptor 为每个服务动态生成 重启/启动/停止） |
-| `pi-web-ui-recovery-watchdog.js` | companion watchdog：独立 Node 进程，只监听 `127.0.0.1`，按登记的命令停/起服务 |
+| [`plugins/`](plugins/) | 可直接安装的界面插件，一个子目录一个插件（各自带 `manifest.json`） |
+| [`patches/`](patches/) | 对 pi-web-ui / pi 编译产物的补丁（**与版本强绑定**，升级后需重跑） |
+| [`upstream/`](upstream/) | 准备提给上游的 issue / PR 草案与状态 |
+| [`catalog.json`](catalog.json) | 插件市场目录文档（供 pi-web-ui 一键同步安装） |
+| [`examples/`](examples/) | 配置示例（restart descriptor） |
+| [`scripts/`](scripts/) | 补丁脚本依赖的定位模块 |
+| `screenshots/` | 界面截图 |
 
-## 为什么需要外部 watchdog
+## 插件
 
-插件跑在 pi-web-ui 服务进程里。服务卡死、崩溃，或者处在“进程还在但页面连不上”的状态时，插件自己也没了 —— 无法自救。
-所以真正的恢复能力必须放在**服务之外**：一个只监听本机端口的小进程，由它停掉并重新拉起服务。
+### ⚡ 额度与成本 `codex-usage`
 
-## 快速开始
-
-### 1. 写一份 restart descriptor
-
-```json
-{
-  "command": "npm",
-  "args": ["run", "dev"],
-  "cwd": "/path/to/pi-web-ui",
-  "servicePort": 8788,
-  "healthUrl": "http://localhost:5173/",
-  "watchdogPort": 8790,
-  "shell": true,
-  "stop": { "mode": "process-tree", "portFallback": false, "allowUnowned": false }
-}
-```
-
-完整字段与多服务写法见 `examples/restart-descriptor.example.json`。
-
-**关键点：watchdog 不猜你是怎么启动的**，它只执行 descriptor 里登记的 `command`。
-所以 `npm run dev`、`npm start`、直接跑 server、CLI 启动都能覆盖 —— 由启动方登记即可。
-
-### 2. 起 watchdog
+一次对话内按 **API 提供商 → 模型** 连续累计花费：换模型不清零、换提供商不串账；每个模型显示调用次数、输入/输出 token、平均每次成本与有效每百万 token 成本；订阅渠道标注「订阅（不计费）」，金额优先取响应自带的 `usage.cost`，缺失时按**已核实的官方牌价**回退。
 
 ```bash
-node pi-web-ui-recovery-watchdog.js --descriptor ./restart-descriptor.json
+pi-web-ui install xieweimo/pi-web-ui-contrib/plugins/codex-usage
 ```
 
-### 3. 调它（HTTP，仅本机）
+细节见 [`plugins/codex-usage/README.md`](plugins/codex-usage/README.md)。
+
+> 完整会话账本（跨重启/重开不归零）与多标签按页面隔离依赖宿主能力，见
+> [`patches/patch-pi-web-ui-plugin-per-client-conversation.js`](patches/patch-pi-web-ui-plugin-per-client-conversation.js)；
+> 未打补丁的宿主上会降级为「当前上下文回退」，不会崩。
+
+### 🔄 重连 `reconnect`
+
+一键「重新连接 / 重启服务」；配套独立守护进程，**服务卡死或崩溃时也能把它救回来**。
 
 ```bash
-curl http://127.0.0.1:8790/state                              # 状态：健康检查 / PID / 阶段 / 最近失败原因
-curl -X POST http://127.0.0.1:8790/start                      # 启动全部服务
-curl -X POST http://127.0.0.1:8790/restart                    # 重启全部服务
-curl -X POST http://127.0.0.1:8790/stop                       # 停止全部服务
-curl -X POST http://127.0.0.1:8790/services/web/restart       # 只重启某个服务
+pi-web-ui install xieweimo/pi-web-ui-contrib/plugins/reconnect
 ```
 
-（`watchdogPort` 默认 8790。`npm run dev` 的后端固定用 8788，所以 8790 不会撞。）
+细节见 [`plugins/reconnect/README.md`](plugins/reconnect/README.md)。
 
-## 多服务：可以只重启一层
+#### 为什么需要一个外部 watchdog
 
-descriptor 里可以登记多个服务，各自独立生命周期：
+插件跑在 pi-web-ui 服务进程里。服务卡死、崩溃，或处在「进程还在但页面连不上」的状态时，插件自己也没了 —— 无法自救。所以真正的恢复能力必须放在**服务之外**：一个只监听 `127.0.0.1` 的小进程，由它停掉并重新拉起服务。
 
-```json
-{
-  "watchdogPort": 8791,
-  "primaryServiceId": "backend",
-  "services": {
-    "backend":  { "command": "node", "args": ["--import", "tsx", "server/index.ts"],
-                  "servicePort": 8788, "healthUrl": "http://localhost:8788/api/health", "order": 10 },
-    "frontend": { "command": "node", "args": ["node_modules/vite/bin/vite.js"],
-                  "servicePort": 5173, "healthUrl": "http://localhost:5173/", "order": 20 }
-  }
-}
+```bash
+# 1) 写一份 descriptor（完整字段见 examples/restart-descriptor.example.json）
+# 2) 起 watchdog
+node plugins/reconnect/watchdog/pi-web-ui-recovery-watchdog.js --descriptor ./restart-descriptor.json
+# 3) 调它（仅本机）
+curl http://127.0.0.1:8790/state
+curl -X POST http://127.0.0.1:8790/restart
 ```
 
-实测：只重启前端不动后端，或只重启后端不动前端（两边 PID 互不影响）。
+watchdog **不猜你是怎么启动服务的**，只执行 descriptor 里登记的 `command`。默认也只操作自己启动并记录了 PID 的进程；端口上若是 `pi-web-ui server install`、systemd、launchd 托管的进程会拒绝接管（除非显式 `force`），避免和平台自带的 supervisor 打架。
 
-## 与已有 supervisor 的边界
-
-默认只操作「自己启动并且记录了 PID」的进程，不会去动别人的服务：
-
-| 情况 | 行为 |
-| --- | --- |
-| 端口上的进程由本 watchdog 启动 | 正常重启 / 停止 |
-| 端口上有别的进程（例如 `server install` / systemd / launchd 托管的） | **拒绝**，并提示它由哪个管理器托管 |
-| 确实要接管（显式确认之后） | 带 `?force=1` 才接管；界面里是「接管并重启」按钮 + 二次确认弹窗 |
-
-建议分工：`server install` / systemd / launchd / Docker 继续用平台自己的机制；
-`npm run dev`、`npm start`、直接跑 server 这类**没有 supervisor** 的场景才用它。
-
-## 界面插件
-
-把 `reconnect-plugin/` 放进 `<dataDir>/plugins/reconnect/`（默认 `~/.pi-web/plugins/reconnect/`），刷新页面即可。
-
-- 面板按运行环境切换文案：开发环境讲“哪一层、会不会影响 HMR”；普通环境只讲“什么时候点、会不会丢东西”
-- 断连时插件客户端会**直连 watchdog**（`127.0.0.1:<watchdogPort>`），所以“页面连不上后端”时依然能重启服务
-- 入口、状态、按钮全部走插件 API（`manifest.ui` + `host.route`），不改包内源码
-
-### 界面长什么样
+#### 界面
 
 普通环境（只有一层服务）：
 
@@ -104,48 +67,36 @@ descriptor 里可以登记多个服务，各自独立生命周期：
 
 ![development panel](screenshots/panel-development.png)
 
-面板文案会按运行环境切换：开发环境讲“哪一层、会不会影响 HMR”；普通环境只讲“什么时候点、会不会丢东西”，
-不出现 Vite / `node --watch` 这类开发术语。
+## 从插件市场一键安装
 
-### 只想先看看界面（不动 pi-web-ui 包、不打补丁）
+在 pi-web-ui 里打开 **设置 → 界面插件 → 插件市场 → 从目录同步**，填：
 
-插件目录与包目录本来就是分开的（`npm i -g pi-web-ui` 升级不会动它），所以可以只拷插件：
-
-```powershell
-$d="$env:USERPROFILE\.pi-web\plugins\reconnect"; New-Item -ItemType Directory -Force -Path "$d\client" | Out-Null
-$b="https://raw.githubusercontent.com/xieweimo/pi-web-ui-reconnect-watchdog/main/reconnect-plugin"
-irm "$b/manifest.json" -OutFile "$d\manifest.json"
-irm "$b/index.mjs" -OutFile "$d\index.mjs"
-irm "$b/client/entry.mjs" -OutFile "$d\client\entry.mjs"
+```
+https://raw.githubusercontent.com/xieweimo/pi-web-ui-contrib/main/catalog.json
 ```
 
-刷新页面后顶栏会出现「重连」入口。没起 watchdog 时它会提示“重启守护未运行”，
-但状态显示与「刷新并重新连接」照常可用。
+即可看到本仓库的插件并按需安装 / 更新。
 
-卸载：删掉 `~\.pi-web\plugins\reconnect` 目录即可，零残留。
+## 补丁
 
-（Linux / macOS 对应目录是 `~/.pi-web/plugins/reconnect/`，把三个文件放进去就行。）
+[`patches/`](patches/) 里的脚本就地修改 pi-web-ui / pi 的**编译产物**，因此与版本强绑定，升级后必须重跑；锚点失配时会以退出码 2 拒绝盲改。
+
+其中一批能力**上游已经原生实现**，对应补丁已退役、不再分发（代理传递、最近项目 tombstone、fork 去重、逐条 `usageCost`、模型同步到插件、停止按钮脉冲、快捷短语排队等）——完整对照表见 [`patches/README.md`](patches/README.md)。
+
+## 上游提案
+
+[`upstream/`](upstream/) 里每一项都写清了「解决什么问题、解除哪个本地补丁、当前状态」。上游已合入的能力会在 `patches/README.md` 里同步标记退役，避免长期靠改产物活着。
 
 ## 实测记录（Windows）
 
-- `npm run dev`：整棵进程树（npm → concurrently → node --watch / vite）停止并重启，恢复后前后端都健康
-- 多服务：单服务重启不影响另一层（另一个的 PID 不变）
-- 拒绝未授权接管：端口上放一个外部进程 → 不带 `force` 返回 409，带 `force` 才接管
-- 停止：Windows 用 `taskkill /T`，并显式 `windowsHide`（不闪控制台）
+- `npm run dev`：整棵进程树（npm → concurrently → node --watch / vite）停止并重启，恢复后前后端都健康；
+- 多服务：单服务重启不影响另一层（另一个的 PID 不变）；
+- 拒绝未授权接管：端口上放一个外部进程 → 不带 `force` 返回 409，带 `force` 才接管；
+- 停止：Windows 用 `taskkill /T`，并显式 `windowsHide`（不闪控制台）。
 
 ## 未验证
 
-进程树停止的 Linux/macOS 分支用的是进程组信号（`kill(-pid)`）：代码已写，但**没有在真机上验证过**，
-需要 CI 或另一台机器跑一遍。
-
-## 文件
-
-```
-reconnect-plugin/                         界面插件（manifest + 服务端路由 + 客户端视图）
-pi-web-ui-recovery-watchdog.js            companion watchdog（单文件、零依赖，只用 Node 内置模块）
-examples/restart-descriptor.example.json  单服务 / 多服务 descriptor 示例
-screenshots/                              界面截图
-```
+进程树停止的 Linux / macOS 分支用的是进程组信号（`kill(-pid)`）：代码已写，但**没有在真机上验证过**，需要 CI 或另一台机器跑一遍。
 
 ## License
 
