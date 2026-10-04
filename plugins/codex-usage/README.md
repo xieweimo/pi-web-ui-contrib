@@ -179,6 +179,7 @@ node projects/codex-usage-plugin/tests/per-client-state.test.mjs
 node projects/codex-usage-plugin/tests/stale-client-ttl.test.mjs
 node projects/codex-usage-plugin/tests/plan-decoupling.test.mjs
 node projects/codex-usage-plugin/tests/state-alignment.test.mjs
+node projects/codex-usage-plugin/tests/host-patch.test.mjs
 node projects/codex-usage-plugin/tests/market-entry.test.mjs
 node projects/codex-usage-plugin/tests/manual-test.mjs
 node scripts/install-plugins.js --only codex-usage
@@ -195,6 +196,24 @@ node scripts/check-codex-usage.js --reload
 - `usage.cost.total` 是第一优先级，显示为“响应成本”；只有该字段缺失时才会使用已核实的官方 token 牌价回退。未收录精确官方价的模型会标记缺成本，不会拿猜测价伪装成控制台账单。
 - 订阅、免费模型统一显示“订阅（不计费）”或“免费，不计费”；目录理论价仅用于解释为什么被排除，绝不并入 API 总计。
 - 当前已核实的官方牌价回退覆盖 DeepSeek Flash / V4 Pro 与 Xiaomi `mimo-v2.6-flash`；小米价格来源为官方文档的实时 API 价（缓存命中 `$0.0028/M`、未命中输入 `$0.14/M`、输出 `$0.28/M`，2026-09-26 核实）。NVIDIA NIM 试用接口未见逐 token 官方价，保留为免费/待确认，不套用 GLM 其他渠道的牌价。
+
+## 多标签 / 并行对话 / 子代理：宿主补丁（可选，一条命令）
+
+额度/成本是按「本页面正在看的那个对话」算的。但截至 pi-web-ui **0.99.0**，官方插件 API 无法让插件
+知道“本页面在看哪个会话”（`getActiveConversation()` 不收 `clientId`、`conversations.list()` 的
+运行中会话不给 `sessionFile`、`onStats` 已被上游删除），所以插件只能拿到“全局最近活跃对话”。
+
+- **只开一个标签页、不开子代理**：什么都不用做，本来就是对的。
+- **同时看多个对话 / 跑子代理**：跑一次宿主补丁即可（幂等、版本自检、失配拒绝）：
+
+```bash
+node <插件目录>/host-patch/apply.cjs            # 应用
+node <插件目录>/host-patch/apply.cjs --dry-run  # 只预览
+```
+
+不打补丁也不会算错钱：那些页面会显示 `⚡ 同步中…`（绝不把别的对话的数字报给你）。
+原理、锚点清单与风险见 `host-patch/README.md`；等价性/幂等/失配不写盘由
+`tests/host-patch.test.mjs` 守住。
 
 ## 插件市场发布
 

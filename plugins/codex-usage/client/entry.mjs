@@ -546,6 +546,7 @@ export default {
 			const bits = [];
 			if (!myStateAligned) {
 				bits.push("⚠ 这份数据还不是本页面会话的（宿主重启后活动对话被重置）——正在重新对齐，已保留上一次对齐的数值");
+				bits.push("多标签/并行对话/子代理需要宿主补丁（插件目录 host-patch/README.md，一条命令）；不打也能用，只是这些页面显示“同步中…”而不给错数字");
 			}
 			if (s.plan) bits.push(`套餐：${s.plan}`);
 			if (s.model?.provider) bits.push(`模型：${s.model.provider}${s.model.model ? ` / ${s.model.model}` : ""}`);
