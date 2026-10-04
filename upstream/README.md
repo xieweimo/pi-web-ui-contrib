@@ -6,7 +6,7 @@
 
 | 草案 | 类型 | 解决什么 | 解除哪些本地补丁 | 状态 |
 | --- | --- | --- | --- | --- |
-| `01-client-scoped-conversation-and-model.md` | API 新增 | 插件只能拿到「全客户端最近活跃对话」，也不知道模型何时切换 → 多标签/并行对话/子代理时插件串页 | `plugin-per-client-conversation`、`plugin-live-model` | 待提交（0.99.0 已原生提供 `sessionFile`/`sessionId`/`sessionDir`/`model`，本项已收窄为 `clientId` + `isSubagent` + 模型变更事件） |
+| `01-client-scoped-conversation-and-model.md` | API 新增 | 插件只能拿到「全客户端最近活跃对话」，也不知道模型何时切换 → 多标签/并行对话/子代理时插件串页 | `plugin-per-client-conversation`、`plugin-live-model` | **已提交 → [#542](https://github.com/xing-shuyin/pi-web-ui/issues/542)**（2026-10-04；0.99.0 已原生提供 `sessionFile`/`sessionId`/`sessionDir`/`model`，本项只申请 `clientId` + `isSubagent` + 模型变更事件） |
 | `02-client-scoped-ui-widget.md` | API 新增 | 插件想往按页面隔离的状态栏放动态内容，只能靠宿主私有 DOM | 额度插件的 `.statusbar` DOM 注入 | 待提交 |
 | `03-extensible-inline-marker-plan.md` | API 新增 | 新协议必须改宿主产物，插件无法自行扩展 | `plan-marker` | 待提交 |
 | `04-dangling-tool-call-healer.md` | bug | 悬空 toolCall 修复会补出孤立 `function_call_output` → 重试 400 且越修越多 | `dangling-tool-calls` | **上游 0.96.0 已内建收紧**，草案转为验证资料 |
@@ -20,7 +20,8 @@
 
 - git / 网页形式的旧仓库链接会被 GitHub 自动重定向；
 - 但 `raw.githubusercontent.com` 的旧**路径**不会重定向；
-- 上游默认插件列表里 `reconnect` 条目的 `source` 仍是 `xieweimo/pi-web-ui-reconnect-watchdog/reconnect-plugin`，需要在 `xing-shuyin/pi-web-ui` 的 `plugins/catalog.json` 里改成 `xieweimo/pi-web-ui-contrib/plugins/reconnect`（一行 PR）。
+- 上游默认插件列表里 `reconnect` 条目的 `source` 仍是 `xieweimo/pi-web-ui-reconnect-watchdog/reconnect-plugin`，需要在 `xing-shuyin/pi-web-ui` 的 `plugins/catalog.json` 里改成 `xieweimo/pi-web-ui-contrib/plugins/reconnect`。
+- **已提交 PR → [#541](https://github.com/xing-shuyin/pi-web-ui/pull/541)**（2026-10-04，1 文件 2 行），等上游合并。
 
 > 已安装过旧来源的用户不受影响：更新检查读的是插件目录里的 `.pi-source.json`，不是市场条目。
 
