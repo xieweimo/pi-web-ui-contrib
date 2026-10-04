@@ -6,7 +6,7 @@
 
 | 草案 | 类型 | 解决什么 | 解除哪些本地补丁 | 状态 |
 | --- | --- | --- | --- | --- |
-| `01-client-scoped-conversation-and-model.md` | API 新增 | 插件只能拿到「全客户端最近活跃对话」，也没法知道当前模型 → 多标签/并行对话/子代理时插件串页 | `plugin-per-client-conversation`、`plugin-live-model` | 待提交（需补 `sessionFile` 字段一节） |
+| `01-client-scoped-conversation-and-model.md` | API 新增 | 插件只能拿到「全客户端最近活跃对话」，也不知道模型何时切换 → 多标签/并行对话/子代理时插件串页 | `plugin-per-client-conversation`、`plugin-live-model` | 待提交（0.99.0 已原生提供 `sessionFile`/`sessionId`/`sessionDir`/`model`，本项已收窄为 `clientId` + `isSubagent` + 模型变更事件） |
 | `02-client-scoped-ui-widget.md` | API 新增 | 插件想往按页面隔离的状态栏放动态内容，只能靠宿主私有 DOM | 额度插件的 `.statusbar` DOM 注入 | 待提交 |
 | `03-extensible-inline-marker-plan.md` | API 新增 | 新协议必须改宿主产物，插件无法自行扩展 | `plan-marker` | 待提交 |
 | `04-dangling-tool-call-healer.md` | bug | 悬空 toolCall 修复会补出孤立 `function_call_output` → 重试 400 且越修越多 | `dangling-tool-calls` | **上游 0.96.0 已内建收紧**，草案转为验证资料 |

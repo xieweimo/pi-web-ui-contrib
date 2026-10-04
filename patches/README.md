@@ -23,7 +23,7 @@ node patches/patch-pi-invalid-toolcall-names.js
 | 补丁 | 作用 |
 | --- | --- |
 | `patch-pi-web-ui-plugin-live-model.js` | 插件会话快照补「当前模型」，并在 `setModel()` 成功后立刻通知插件 |
-| `patch-pi-web-ui-plugin-per-client-conversation.js` | 插件快照按浏览器客户端（`clientId`）取「该页面正在看的对话」，并补 `sessionFile`（跨重启的稳定会话键）；全局兜底跳过子代理会话 |
+| `patch-pi-web-ui-plugin-per-client-conversation.js` | 插件快照按浏览器客户端（`clientId`）取「该页面正在看的对话」，并补 `isSubagent`；全局兜底跳过子代理会话。**会话文件路径 `sessionFile` 自 pi-web-ui 0.99.0 起由宿主原生提供，本补丁不再自己加** |
 | `patch-pi-web-ui-plugin-topbar-cache.js` | 插件顶栏入口首帧时序（刷新后不再晚几百毫秒出现） |
 | `patch-pi-web-ui-topbar-menu-buttons.js` | 把原生菜单项提升到顶栏 |
 | `patch-pi-web-ui-plan-board-clear.js` | 看板清空不用同步 `window.confirm()`，避免冻结主线程 |
