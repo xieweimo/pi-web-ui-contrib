@@ -32,6 +32,16 @@ pi-web-ui install xieweimo/pi-web-ui-contrib/plugins/codex-usage
 > [`patches/patch-pi-web-ui-plugin-per-client-conversation.js`](patches/patch-pi-web-ui-plugin-per-client-conversation.js)；
 > 未打补丁的宿主上会降级为「当前上下文回退」，不会崩。
 
+### 🌐 代理健康 `proxy-health`
+
+按可配置的 HTTPS 目标探测代理或直连网络；目标故障时再检查对照站点，不把网络问题武断归咎于代理节点。
+
+```bash
+pi-web-ui install xieweimo/pi-web-ui-contrib/plugins/proxy-health
+```
+
+适用范围、隐私边界及测试见 [`plugins/proxy-health/README.md`](plugins/proxy-health/README.md)。
+
 ### 🔄 重连 `reconnect`
 
 一键「重新连接 / 重启服务」；配套独立守护进程，**服务卡死或崩溃时也能把它救回来**。
