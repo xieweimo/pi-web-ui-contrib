@@ -218,17 +218,18 @@ node <插件目录>/host-patch/apply.cjs --dry-run  # 只预览
 
 ## 插件市场发布
 
-`configs/codex-usage-plugin-market-entry.json` 是提交到插件市场的条目草案，来源指向本仓库的插件子目录。发布到 GitHub 后，用户可在 **设置 → 界面插件 → 插件市场** 中选装；要进入 pi-web-ui 的默认官方/社区列表，还需向上游 `plugins/catalog.json` 提交 PR。
+本公开仓库的 `catalog.json` 已收录 `codex-usage`，可从 **设置 → 界面插件 → 插件市场** 添加该目录源后安装，或执行：
 
-> 当前未执行远端同步；在仓库未推送前，不应把该条目注册到本机市场并尝试安装旧远端版本。
+```bash
+pi-web-ui install xieweimo/pi-web-ui-contrib/plugins/codex-usage
+```
+
+进入 pi-web-ui 内置的默认市场目录还需向上游 `plugins/catalog.json` 提交 PR。
 
 ## 按页面隔离（多标签 / 并行对话 / 子代理）
 
-宿主的插件快照只给「全客户端最近活跃对话」（`readConversationForPlugins()`），而状态栏是全局单例。
-只要有第二个标签页、并行对话或子代理在跑，某个页面就会挂上别的对话的模型与额度
-（典型现象：模型选了 DeepSeek，底部却显示 `openai-codex` 的额度窗口）。
-
-本插件配合宿主补丁 `patches/patch-pi-web-ui-plugin-per-client-conversation.js` 修正：
+新版宿主 #542 提供按 `clientId` 读取各标签页会话的能力；旧版可选历史宿主补丁。
+插件用以下防线避免并行对话时把别的页面的额度当成本页数据：
 
 - 服务端在每个页面接入（`onAttach` / `onMessage` 的 `from`）时记住 `clientId`，刷新时优先用
   `host.getActiveConversation({ clientId })`（旧补丁回退字符串参数）取**该页面打开的对话**，各算一份并用
