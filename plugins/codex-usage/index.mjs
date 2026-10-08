@@ -879,7 +879,7 @@ export default {
 		/**
 		 * 已接入的浏览器页面：clientId → 该页面最近一次收到的状态。
 		 * 宿主只会给「全客户端最近活跃对话」，多标签/并行对话/子代理下会串页，
-		 * 所以这里按页面各算一份并定向下发（host.getActiveConversation(clientId)）。
+		 * 所以这里按页面各算一份并定向下发（上游 #542 使用 { clientId }）。
 		 */
 		const clientStates = new Map();
 		/** 最多跟踪这么多页面，防止长时间开着多个标签页时无限增长。 */
@@ -893,15 +893,18 @@ export default {
 		/** 宿主是否支持官方 bottombar 槽位（manifest.ui 里申报了 codex-usage:bar）。 */
 		const slotBarSupported = typeof host.ui?.update === "function";
 
-		/** 取某个页面当前打开的对话；宿主不支持按客户端取（旧版）时回落全局快照。 */
+		/** 上游 #542 接收 { clientId }；旧版宿主补丁接收字符串。 */
 		function convFor(clientId) {
 			if (clientId) {
 				try {
-					const scoped = host.getActiveConversation?.(clientId);
-					if (scoped) return scoped;
+					const scoped = host.getActiveConversation?.({ clientId });
+					if (scoped?.clientId === clientId) return scoped;
+					// 旧版补丁不返回 clientId；官方 API 遇到字符串会回落全局，不能误认作本页。
+					const legacy = host.getActiveConversation?.(clientId);
+					if (legacy && (!legacy.clientId || legacy.clientId === clientId)) return legacy;
 				}
 				catch {
-					/* 旧版宿主忽略参数：回落全局 */
+					/* 旧版宿主不支持按客户端查询：回落全局 */
 				}
 			}
 			return host.getActiveConversation?.() ?? null;

@@ -199,12 +199,13 @@ node scripts/check-codex-usage.js --reload
 
 ## 多标签 / 并行对话 / 子代理：宿主补丁（可选，一条命令）
 
-额度/成本是按「本页面正在看的那个对话」算的。但截至 pi-web-ui **0.99.0**，官方插件 API 无法让插件
-知道“本页面在看哪个会话”（`getActiveConversation()` 不收 `clientId`、`conversations.list()` 的
-运行中会话不给 `sessionFile`、`onStats` 已被上游删除），所以插件只能拿到“全局最近活跃对话”。
+上游 #542 已在 `main` 增加 `host.getActiveConversation({ clientId })`：在包含该提交的版本上，
+插件无需补丁即可按标签页分别读取当前对话。旧版宿主若已安装下述历史补丁，插件仍兼容
+字符串参数 `getActiveConversation(clientId)`；未经补丁的旧版，多标签可能降级显示「同步中」。
 
-- **只开一个标签页、不开子代理**：什么都不用做，本来就是对的。
-- **同时看多个对话 / 跑子代理**：跑一次宿主补丁即可（幂等、版本自检、失配拒绝）：
+- **包含 #542 的版本**：无须宿主补丁；多标签页应分别显示各自会话。
+- **旧版且只开一个标签页**：无须宿主补丁。
+- **旧版同时看多个对话 / 跑子代理**：可选历史宿主补丁（幂等、失配拒绝）：
 
 ```bash
 node <插件目录>/host-patch/apply.cjs            # 应用
@@ -229,8 +230,8 @@ node <插件目录>/host-patch/apply.cjs --dry-run  # 只预览
 
 本插件配合宿主补丁 `patches/patch-pi-web-ui-plugin-per-client-conversation.js` 修正：
 
-- 服务端在每个页面接入（`onAttach` / `onMessage` 的 `from`）时记住 `clientId`，刷新时用
-  `host.getActiveConversation(clientId)` 取**该页面打开的对话**，各算一份并用
+- 服务端在每个页面接入（`onAttach` / `onMessage` 的 `from`）时记住 `clientId`，刷新时优先用
+  `host.getActiveConversation({ clientId })`（旧补丁回退字符串参数）取**该页面打开的对话**，各算一份并用
   `host.sendTo(clientId, { state, perClient: true })` 定向下发；汇率与 Codex 额度这类
   账号级数据每轮只查一次；
 - 客户端只在「本页面那份」与「宿主槽位那份」**不一致**时才接管底部状态栏
